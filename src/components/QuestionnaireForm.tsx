@@ -89,7 +89,12 @@ export default function QuestionnaireForm({ questions }: Props) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ recommendations: results }),
+        body: JSON.stringify({ 
+          recommendations: results,
+          location_country: answers.location_country,
+          location_state: answers.location_state,
+          location_city: answers.location_city,
+        }),
       });
 
       if (!response.ok) {
@@ -97,15 +102,34 @@ export default function QuestionnaireForm({ questions }: Props) {
         throw new Error(errorData.error || `Failed to generate PDF: ${response.statusText}`);
       }
 
+      // Extract filename from Content-Disposition header
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = "recommendations.pdf";
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, "");
+        }
+      }
+
       // Get the PDF blob
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       
-      // Open in new tab
+      // Create a temporary anchor element to trigger download with correct filename
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.style.display = "none";
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      
+      // Also open in new tab for viewing
       window.open(url, "_blank");
       
-      // Clean up the URL after a short delay
-      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      // Clean up the URL after a delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     } catch (err) {
       alert(err instanceof Error ? err.message : "An error occurred while generating the PDF");
       console.error("Error generating PDF:", err);

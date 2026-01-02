@@ -531,6 +531,34 @@ export async function POST(request: NextRequest) {
     // Serialize the PDF
     const pdfBytes = await pdfDoc.save();
 
+    // Generate filename with timestamp and location
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const timestamp = `${year}${month}${day}-${hours}${minutes}`; // YYYYMMDDHHMM format
+
+    // Extract location from body, sanitize for filename
+    const sanitizeForFilename = (str: unknown): string => {
+      if (typeof str !== "string" || !str.trim()) return "unknown";
+      // Remove special characters, replace spaces with hyphens, convert to lowercase
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+    };
+
+    const country = sanitizeForFilename(body.location_country);
+    const state = sanitizeForFilename(body.location_state);
+    const city = sanitizeForFilename(body.location_city);
+
+    const filename = `${timestamp}-${country}-${state}-${city}-society-as-a-service-recommendations.pdf`;
+
     // Convert Uint8Array to ArrayBuffer for Response
     // Create a new Uint8Array copy to ensure we have a regular ArrayBuffer
     const arrayBuffer = new Uint8Array(pdfBytes).buffer;
@@ -538,7 +566,7 @@ export async function POST(request: NextRequest) {
     return new Response(arrayBuffer, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="recommendations.pdf"',
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
   } catch (error) {
