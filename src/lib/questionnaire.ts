@@ -1,4 +1,4 @@
-export type QuestionType = "text" | "number" | "select" | "textarea";
+export type QuestionType = "text" | "number" | "select" | "textarea" | "radio";
 
 export type Question = {
   id: string;
@@ -63,6 +63,7 @@ export const QUESTIONS: Question[] = [
     id: "household_size",
     label: "Expected number of people living there",
     type: "number",
+    required: true,
     min: 1,
     placeholder: "e.g., 3",
   },
@@ -76,4 +77,14 @@ export const QUESTIONS: Question[] = [
       { label: "Maximize convenience", value: "max_convenience" },
     ],
   },
+  {
+    id: "used_items",
+    label: "Are you willing to use used items?",
+    required: true,
+    type: "radio",
+    options: [
+      { label: "Yes, I am willing to use used items", value: "yes" },
+      { label: "No, I am not willing to use used items", value: "no" },
+    ],
+  }
 ];
